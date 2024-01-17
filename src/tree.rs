@@ -4,15 +4,19 @@ mod bst {
     use std::{
         borrow::BorrowMut,
         cell::{Cell, RefCell},
+        collections::VecDeque,
         rc::{Rc, Weak},
         thread::current,
     };
 
+    type Link = Option<Rc<RefCell<Node>>>;
+    type WeakLink = Option<Weak<RefCell<Node>>>;
+
     struct Node {
-        parent: Option<Weak<Cell<Node>>>,
-        left_child: Option<Rc<Cell<Node>>>,
-        right_child: Option<Rc<Node>>,
-        value: usize,
+        parent: WeakLink,
+        left_child: Link,
+        right_child: Link,
+        data: usize,
     }
 
     impl Node {
@@ -21,13 +25,19 @@ mod bst {
                 parent: Option::default(),
                 left_child: Option::default(),
                 right_child: Option::default(),
-                value,
+                data: value,
             }
         }
     }
 
     struct Tree {
-        root: Option<Rc<Cell<Node>>>,
+        root: Link,
+    }
+
+    trait InorderIter {
+        fn inorder_iter(&self) -> InorderIterator {
+            todo!();
+        }
     }
 
     impl Tree {
@@ -40,29 +50,73 @@ mod bst {
         fn insert(&mut self, value: usize) {
             let mut new_node = Node::new(value);
 
-            let Some(current) = self.root else {
-                self.root = Some(Rc::new(Cell::new(new_node)));
+            let Some(mut current) = self.root.clone() else {
+                self.root = Some(Rc::new(RefCell::new(new_node)));
                 return;
             };
 
             loop {
-                match current.borrow_mut().value.cmp(value) {
-                    std::cmp::Ordering::Less => {
-                        //Add inorder Sucessor
-                        let Some(current) = &current.left_child else {
-                            new_node.parent = Some(Rc::downgrade(current));
-                            current.left_child = Some(Rc::new(Cell::new(new_node)));
-                            break;
-                        };
+                let mut next_node = {
+                    let current_ref = current.borrow();
+                    match current_ref.data.cmp(&value) {
+                        std::cmp::Ordering::Less => current_ref.left_child.clone(),
+                        std::cmp::Ordering::Greater => current_ref.right_child.clone(),
+                        std::cmp::Ordering::Equal => todo!(),
                     }
-                    std::cmp::Ordering::Equal => {
-                        //add inorder predecessor
-                        todo!();
+                };
+
+                match next_node {
+                    Some(node) => current = node,
+                    None => {
+                        next_node = Some(Rc::new(RefCell::new(new_node)));
+                        return;
                     }
-                    std::cmp::Ordering::Greater => break,
                 }
             }
             todo!()
+        }
+
+        // This Method moves to the First Element for the Inorder Traversal
+        // This means the resulting Iterator can already start at the correct element
+        fn inorder(&self) -> InorderIterator {
+            InorderIterator {
+                stack: vec![&self.root],
+            }
+        }
+    }
+
+    struct InorderIterator<'a> {
+        stack: Vec<&'a Link>,
+    }
+
+    impl<'a> Iterator for InorderIterator<'a> {
+        type Item = usize;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            todo!();
+            // match self.stack {
+            //     Some(node) => {
+            //         let node_ref = node.borrow();
+            //         let next = node_ref.data;
+
+            //         return Some(next);
+            //     }
+            //     None => return None,
+            // };
+        }
+    }
+
+    mod test {
+        use super::{InorderIter, InorderIterator, Tree};
+
+        #[test]
+        fn test_tree() {
+            let mut tree = Tree::new();
+            tree.insert(5);
+            tree.insert(8);
+            for value in tree.inorder() {
+                println!("{}", value);
+            }
         }
     }
 }

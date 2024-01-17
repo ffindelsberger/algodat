@@ -7,6 +7,9 @@ use std::{
     usize,
 };
 
+/// Playing around with channels a bit. This is a really basic implementation of a Thread Pool
+/// id does not use any async/await features , its all platfrom threads,
+/// so maybe i should also write one using tokio to get familiar with it.
 pub struct ThreadPool {
     sender: Sender<Job>,
     workers: Vec<Worker>,

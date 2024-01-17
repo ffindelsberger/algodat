@@ -46,7 +46,6 @@ pub mod http {
     impl Handler {
         fn run(mut self) {
             self.socket.write_all("Hello Partner".as_bytes());
-            LinkedList::new()
         }
     }
 
